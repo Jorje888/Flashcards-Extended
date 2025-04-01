@@ -9,6 +9,7 @@
  */
 
 import { Flashcard, AnswerDifficulty, BucketMap } from "./flashcards";
+import { Statistics, ProgressStats, SessionHistory } from "../types/index";
 
 /**
  * Converts a Map representation of learning buckets into an Array-of-Set representation.
@@ -19,8 +20,19 @@ import { Flashcard, AnswerDifficulty, BucketMap } from "./flashcards";
  * @spec.requires buckets is a valid representation of flashcard buckets.
  */
 export function toBucketSets(buckets: BucketMap): Array<Set<Flashcard>> {
-  // TODO: Implement this function
-  throw new Error("Implement me!");
+  const bucketArray = new Array<Set<Flashcard>>();
+  const keys = Array.from(buckets.keys());
+  const maxKey = Math.max(...keys);
+  if(keys.length === 0) return bucketArray;
+
+  for (let i = 0; i <= maxKey; i++) {
+    if (buckets.has(i)) {
+      bucketArray.push(buckets.get(i)!);
+    } else {
+      bucketArray.push(new Set<Flashcard>());
+    }
+  }
+  return bucketArray;
 }
 
 export function isPrime(n: number) {
@@ -41,8 +53,11 @@ export function isPrime(n: number) {
 export function getBucketRange(
   buckets: Array<Set<Flashcard>>
 ): { minBucket: number; maxBucket: number } | undefined {
-  // TODO: Implement this function
-  throw new Error("Implement me!");
+  const nonEmptyBuckets = buckets.filter((bucket) => bucket.size > 0);
+  if (nonEmptyBuckets.length === 0) return undefined;
+  const minBucket = Math.min(...nonEmptyBuckets.map((bucket) => bucket.size));
+  const maxBucket = Math.max(...nonEmptyBuckets.map((bucket) => bucket.size));
+  return { minBucket, maxBucket };
 }
 
 /**
@@ -58,8 +73,22 @@ export function practice(
   buckets: Array<Set<Flashcard>>,
   day: number
 ): Set<Flashcard> {
-  // TODO: Implement this function
-  throw new Error("Implement me!");
+  const practiceSet = new Set<Flashcard>();
+  if (buckets.length === 0) return practiceSet;
+  else for (const card of buckets[0]!) {
+    practiceSet.add(card);
+  }
+  if (day <= 0 || day % 1 === 1) {
+    return buckets[0]!;
+  }
+  for (let i = 1; i < buckets.length; i++) {
+    if ((day % Math.pow(2, i))  === 0) {
+      for (const card of buckets[i]!) {
+        practiceSet.add(card);
+      }
+    }
+    }
+  return practiceSet;
 }
 
 /**
@@ -76,8 +105,36 @@ export function update(
   card: Flashcard,
   difficulty: AnswerDifficulty
 ): BucketMap {
-  // TODO: Implement this function
-  throw new Error("Implement me!");
+  const newBuckets: BucketMap = new Map<number, Set<Flashcard>>();
+
+  // Iterate over each bucket and duplicate its contents
+  for (const [key, flashSet] of buckets.entries()) {
+    const newFlashSet = new Set<Flashcard>(flashSet);
+    newBuckets.set(key, newFlashSet);
+  }
+
+  const currentBucket = Array.from(buckets.keys()).find(key => buckets.get(key)!.has(card));
+  if (currentBucket === undefined) {
+    const firstBucket = buckets.get(0)!;
+    firstBucket.add(card);
+    newBuckets.set(0, firstBucket);
+  } else {
+    const newFlashSet = new Set<Flashcard>(buckets.get(currentBucket)!);
+    if (difficulty === AnswerDifficulty.Easy) {
+      newFlashSet.delete(card);
+      const nextFlashSet = new Set<Flashcard>(buckets.get(currentBucket + 1)!);
+      nextFlashSet.add(card);
+      newBuckets.set(currentBucket, newFlashSet);
+      newBuckets.set(currentBucket + 1, nextFlashSet);
+    } else if (difficulty === AnswerDifficulty.Wrong) {
+      newFlashSet.delete(card);
+      newBuckets.set(currentBucket, newFlashSet);
+      const firstFlashSet = new Set<Flashcard>(buckets.get(0)!);
+      firstFlashSet.add(card);
+      newBuckets.set(0, firstFlashSet);
+    }
+  }
+  return newBuckets;
 }
 
 /**
@@ -88,20 +145,41 @@ export function update(
  * @spec.requires card is a valid Flashcard.
  */
 export function getHint(card: Flashcard): string {
-  // TODO: Implement this function (and strengthen the spec!)
-  throw new Error("Implement me!");
+  if (card.hint !== "") {
+    return card.hint;
+  }
+  return "You're on your own with this one";
 }
 
 /**
  * Computes statistics about the user's learning progress.
  *
- * @param buckets representation of learning buckets.
- * @param history representation of user's answer history.
- * @returns statistics about learning progress.
- * @spec.requires [SPEC TO BE DEFINED]
+ * @param sessionHistory representation of the last session activities
+ * @param progressStats success rate records of previous sessions.
+ * @returns statistics about current session and overall learning progress.
+ * @spec.requires sessionHistory is a valid representation of user's answer history.
+ * @spec.requires progressStats is a valid representation of learning progress.
  */
-export function computeProgress(buckets: any, history: any): any {
-  // Replace 'any' with appropriate types
-  // TODO: Implement this function (and define the spec!)
-  throw new Error("Implement me!");
+export function computeProgress(
+  sessionHistory: SessionHistory,
+  progressStats: ProgressStats,
+): Statistics {
+  const totalCards = Array.from(sessionHistory.successMap.keys()).length || 1;
+  var hintsNeeded: number = 0;
+  const gotWrong: Flashcard[] = [];
+  sessionHistory.successMap.forEach((result, flashcard) => {
+    if (result.length === 2) {
+      if (result[0] === AnswerDifficulty.Wrong) gotWrong.push(flashcard);
+      if (result[1]) hintsNeeded ++;
+    }
+  });
+  const successRate = (totalCards - gotWrong.length) / totalCards * 100;
+  progressStats.successRates.push(successRate);
+  return {
+    totalCards,
+    successRate,
+    hintsNeeded,
+    gotWrong,
+    progressStats: { successRates: [...progressStats.successRates, successRate] },
+  };
 }
