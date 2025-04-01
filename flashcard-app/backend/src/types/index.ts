@@ -23,12 +23,21 @@ export interface SessionHistory{
    successMap: Map<Flashcard, [AnswerDifficulty, boolean]>;
 }
 
-export interface PracticeRecord {
+export interface PracticeStats {
   totalCards: number;
   successRate: number;
   hintsNeeded: number;
   gotWrong: Flashcard[];
   progressStats: ProgressStats;
+}
+
+export interface PracticeRecord {
+  cardFront: string;
+  cardBack: string;
+  timestamp: number;
+  difficulty: AnswerDifficulty;
+  previousBucket: number;
+  newBucket: number;
 }
 
 export { Flashcard, AnswerDifficulty, BucketMap };
