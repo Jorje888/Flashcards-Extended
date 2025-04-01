@@ -23,7 +23,7 @@ export interface SessionHistory{
    successMap: Map<Flashcard, [AnswerDifficulty, boolean]>;
 }
 
-export interface Statistics {
+export interface PracticeRecord {
   totalCards: number;
   successRate: number;
   hintsNeeded: number;

@@ -9,7 +9,7 @@
  */
 
 import { Flashcard, AnswerDifficulty, BucketMap } from "./flashcards";
-import { Statistics, ProgressStats, SessionHistory } from "../types/index";
+import { PracticeRecord, ProgressStats, SessionHistory } from "../types/index";
 
 /**
  * Converts a Map representation of learning buckets into an Array-of-Set representation.
@@ -163,7 +163,7 @@ export function getHint(card: Flashcard): string {
 export function computeProgress(
   sessionHistory: SessionHistory,
   progressStats: ProgressStats,
-): Statistics {
+): PracticeRecord {
   const totalCards = Array.from(sessionHistory.successMap.keys()).length || 1;
   var hintsNeeded: number = 0;
   const gotWrong: Flashcard[] = [];
