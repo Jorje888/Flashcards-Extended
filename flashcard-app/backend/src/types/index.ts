@@ -16,18 +16,19 @@ export interface HintRequest {
 }
 
 export interface ProgressStats {
-  percentage: number;
-  // TODO
+  successRates: number[];
 }
 
-export interface PracticeRecord {
-  cardFront: string;
-  cardBack: string;
-  timestamp: number;
-  difficulty: AnswerDifficulty;
-  previousBucket: number;
-  newBucket: number;
-  //TODO
+export interface SessionHistory{
+   successMap: Map<Flashcard, [AnswerDifficulty, boolean]>;
+}
+
+export interface Statistics {
+  totalCards: number;
+  successRate: number;
+  hintsNeeded: number;
+  gotWrong: Flashcard[];
+  progressStats: ProgressStats;
 }
 
 export { Flashcard, AnswerDifficulty, BucketMap };
